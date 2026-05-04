@@ -1,4 +1,4 @@
 requests>=2.25.0
 pycryptodome>=3.9.0
 PyNaCl>=1.4.0
-pyncm @ git+https://github.com/mos9527/pyncm.git@26fda90
+pyncm @ https://files.pythonhosted.org/packages/58/f4/05d7a0116bd70dcef0f7214c0e9ee6a50a124525eaefc5c2bb0c5085f0b7/pyncm-1.8.1-py3-none-any.whl
