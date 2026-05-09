@@ -32,28 +32,45 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -e
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --index-url https://pypi.org/simple --no-cache-dir -r requirements.txt
 
-      - name: Check secrets
+      - name: Debug before run
         run: |
+          set -e
+          echo "Current directory:"
+          pwd
+
+          echo "Files:"
+          ls -la
+
+          echo "Python version:"
+          python --version
+
+          echo "Check required secrets:"
           python - <<'PY'
           import os
           import sys
 
+          names = [
+              "MUSIC_U",
+              "CSRF",
+              "SCORE",
+              "FULL_EXTRA_TASKS",
+              "WAIT_TIME_MIN",
+              "WAIT_TIME_MAX",
+              "NOTIFY_EMAIL",
+              "EMAIL_PASSWORD",
+              "SMTP_SERVER",
+              "SMTP_PORT",
+          ]
+
+          for name in names:
+              value = os.getenv(name)
+              print(f"{name} exists:", bool(value))
+
           required = ["MUSIC_U", "CSRF"]
-
-          print("MUSIC_U exists:", bool(os.getenv("MUSIC_U")))
-          print("CSRF exists:", bool(os.getenv("CSRF")))
-          print("SCORE exists:", bool(os.getenv("SCORE")))
-          print("FULL_EXTRA_TASKS exists:", bool(os.getenv("FULL_EXTRA_TASKS")))
-          print("WAIT_TIME_MIN exists:", bool(os.getenv("WAIT_TIME_MIN")))
-          print("WAIT_TIME_MAX exists:", bool(os.getenv("WAIT_TIME_MAX")))
-          print("NOTIFY_EMAIL exists:", bool(os.getenv("NOTIFY_EMAIL")))
-          print("EMAIL_PASSWORD exists:", bool(os.getenv("EMAIL_PASSWORD")))
-          print("SMTP_SERVER exists:", bool(os.getenv("SMTP_SERVER")))
-          print("SMTP_PORT exists:", bool(os.getenv("SMTP_PORT")))
-
           missing = [name for name in required if not os.getenv(name)]
 
           if missing:
@@ -63,4 +80,7 @@ jobs:
 
       - name: Run script
         run: |
+          set -e
+          echo "Start running main.py"
           python -u main.py
+          echo "main.py finished"
