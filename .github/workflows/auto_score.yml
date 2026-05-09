@@ -9,8 +9,19 @@ jobs:
   score:
     runs-on: ubuntu-latest
 
+    env:
+      MUSIC_U: ${{ secrets.MUSIC_U }}
+      CSRF: ${{ secrets.CSRF }}
+      NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      WAIT_TIME_MIN: ${{ secrets.WAIT_TIME_MIN }}
+      WAIT_TIME_MAX: ${{ secrets.WAIT_TIME_MAX }}
+      FULL_EXTRA_TASKS: ${{ secrets.FULL_EXTRA_TASKS }}
+      SCORE: ${{ secrets.SCORE }}
+
     steps:
-    
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -24,16 +35,32 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --index-url https://pypi.org/simple --no-cache-dir -r requirements.txt
 
+      - name: Check secrets
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+
+          required = ["MUSIC_U", "CSRF"]
+
+          print("MUSIC_U exists:", bool(os.getenv("MUSIC_U")))
+          print("CSRF exists:", bool(os.getenv("CSRF")))
+          print("SCORE exists:", bool(os.getenv("SCORE")))
+          print("FULL_EXTRA_TASKS exists:", bool(os.getenv("FULL_EXTRA_TASKS")))
+          print("WAIT_TIME_MIN exists:", bool(os.getenv("WAIT_TIME_MIN")))
+          print("WAIT_TIME_MAX exists:", bool(os.getenv("WAIT_TIME_MAX")))
+          print("NOTIFY_EMAIL exists:", bool(os.getenv("NOTIFY_EMAIL")))
+          print("EMAIL_PASSWORD exists:", bool(os.getenv("EMAIL_PASSWORD")))
+          print("SMTP_SERVER exists:", bool(os.getenv("SMTP_SERVER")))
+          print("SMTP_PORT exists:", bool(os.getenv("SMTP_PORT")))
+
+          missing = [name for name in required if not os.getenv(name)]
+
+          if missing:
+              print("Missing required secrets:", ", ".join(missing))
+              sys.exit(1)
+          PY
+
       - name: Run script
-        env:
-          MUSIC_U: ${{ secrets.MUSIC_U }}
-          CSRF: ${{ secrets.CSRF }}
-          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          WAIT_TIME_MIN: ${{ secrets.WAIT_TIME_MIN }}
-          WAIT_TIME_MAX: ${{ secrets.WAIT_TIME_MAX }}
-          FULL_EXTRA_TASKS: ${{ secrets.FULL_EXTRA_TASKS }}
-          SCORE: ${{ secrets.SCORE }}
-        run: python main.py
+        run: |
+          python -u main.py
