@@ -1,4 +1,4 @@
-name: Refresh Cookie
+name: Check Cookie
 
 on:
   schedule:
@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  refresh:
+  check:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,10 +28,8 @@ jobs:
 
       - name: Check required secrets
         env:
-          NETEASE_PHONE: ${{ secrets.NETEASE_PHONE }}
-          NETEASE_PASSWORD: ${{ secrets.NETEASE_PASSWORD }}
-          NETEASE_MD5_PASSWORD: ${{ secrets.NETEASE_MD5_PASSWORD }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          MUSIC_U: ${{ secrets.MUSIC_U }}
+          CSRF: ${{ secrets.CSRF }}
           NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
@@ -48,29 +46,22 @@ jobs:
             fi
           }
 
-          check_secret NETEASE_PHONE
-          check_secret GH_TOKEN
-
-          if [ -z "$NETEASE_PASSWORD" ] && [ -z "$NETEASE_MD5_PASSWORD" ]; then
-            echo "::error::NETEASE_PASSWORD and NETEASE_MD5_PASSWORD are both empty"
-            missing=1
-          else
-            echo "Netease password is configured"
-          fi
+          check_secret MUSIC_U
+          check_secret CSRF
+          check_secret NOTIFY_EMAIL
+          check_secret EMAIL_PASSWORD
+          check_secret SMTP_SERVER
+          check_secret SMTP_PORT
 
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
 
-      - name: Run refresh script
+      - name: Check cookie status
         env:
+          CHECK_COOKIE_ONLY: "1"
           MUSIC_U: ${{ secrets.MUSIC_U }}
           CSRF: ${{ secrets.CSRF }}
-          NETEASE_PHONE: ${{ secrets.NETEASE_PHONE }}
-          NETEASE_PASSWORD: ${{ secrets.NETEASE_PASSWORD }}
-          NETEASE_MD5_PASSWORD: ${{ secrets.NETEASE_MD5_PASSWORD }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GH_REPO: ${{ github.repository }}
           NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
