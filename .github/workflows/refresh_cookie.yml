@@ -2,38 +2,77 @@ name: Refresh Cookie
 
 on:
   schedule:
-    - cron: '0 14 * * 0'  # 每周日UTC 14:00 (北京时间22:00)
+    - cron: '0 14 * * 0'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-  
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-    
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Run refresh script
-      env:
-        MUSIC_U: ${{ secrets.MUSIC_U }}
-        CSRF: ${{ secrets.CSRF }}
-        NETEASE_PHONE: ${{ secrets.NETEASE_PHONE }}
-        NETEASE_PASSWORD: ${{ secrets.NETEASE_PASSWORD }}
-        NETEASE_MD5_PASSWORD: ${{ secrets.NETEASE_MD5_PASSWORD }}
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        GH_REPO: ${{ github.repository }}
-        NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
-        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-        SMTP_PORT: ${{ secrets.SMTP_PORT }}
-      run: python refresh_cookie.py
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check required secrets
+        env:
+          NETEASE_PHONE: ${{ secrets.NETEASE_PHONE }}
+          NETEASE_PASSWORD: ${{ secrets.NETEASE_PASSWORD }}
+          NETEASE_MD5_PASSWORD: ${{ secrets.NETEASE_MD5_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        run: |
+          missing=0
+
+          check_secret() {
+            if [ -z "${!1}" ]; then
+              echo "::error::$1 is empty or not configured"
+              missing=1
+            else
+              echo "$1 is configured"
+            fi
+          }
+
+          check_secret NETEASE_PHONE
+          check_secret GH_TOKEN
+
+          if [ -z "$NETEASE_PASSWORD" ] && [ -z "$NETEASE_MD5_PASSWORD" ]; then
+            echo "::error::NETEASE_PASSWORD and NETEASE_MD5_PASSWORD are both empty"
+            missing=1
+          else
+            echo "Netease password is configured"
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Run refresh script
+        env:
+          MUSIC_U: ${{ secrets.MUSIC_U }}
+          CSRF: ${{ secrets.CSRF }}
+          NETEASE_PHONE: ${{ secrets.NETEASE_PHONE }}
+          NETEASE_PASSWORD: ${{ secrets.NETEASE_PASSWORD }}
+          NETEASE_MD5_PASSWORD: ${{ secrets.NETEASE_MD5_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        run: python refresh_cookie.py
